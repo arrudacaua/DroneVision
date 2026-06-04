@@ -1,5 +1,6 @@
 import sys
 import os
+from djitellopy import Tello # IMPORTAÇÃO DO DRONE
 from reconhecimento_gestos.comandos import rodar_controle_gestos
 
 def menu():
@@ -14,13 +15,25 @@ def menu():
     print("="*40)
 
 def main():
+    # 🛸 Inicializa e conecta o drone assim que o programa abre
+    print("Conectando ao Drone Tello...")
+    try:
+        drone = Tello()
+        drone.connect()
+        print(f"Drone conectado! Bateria atual: {drone.get_battery()}%")
+    except Exception as e:
+        print(f"⚠️ Não foi possível conectar ao drone físico: {e}")
+        print("O programa continuará rodando em modo de simulação (apenas exibindo comandos).")
+        drone = None # Se falhar, define como None para não crashar o menu
+
     while True:
         menu()
         opcao = input("Opção: ").strip()
 
         if opcao == "1":
             try:
-                rodar_controle_gestos()
+                # Passa o objeto do drone para o módulo de gestos
+                rodar_controle_gestos(drone)
             except Exception as e:
                 print(f"Erro: {e}")
         elif opcao == "2":
@@ -31,6 +44,9 @@ def main():
             print("Em desenvolvimento...")
         elif opcao == "0":
             print("Encerrando...")
+            # Desconecta o drone de forma segura antes de fechar o programa
+            if drone:
+                drone.end() 
             break
         else:
             print("Opção inválida!")

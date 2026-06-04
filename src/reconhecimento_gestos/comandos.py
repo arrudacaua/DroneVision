@@ -2,52 +2,93 @@ import cv2
 import time
 from reconhecimento_gestos.detector import processar_frame_mao, coletar_coordenadas, mapear_dedos_levantados
 
-GESTOS = {
-    (1, 1, 1, 1, 1): "Decolar",
-    (0, 0, 0, 0, 0): "Parar",
-    (1, 0, 0, 0, 0): "Frente",
-    (1, 0, 0, 0, 1): "Flip",
-    (0, 1, 1, 0, 0): "Trás"
+DICIONARIO_COMANDOS = {
+    (1, 1, 1, 1, 1): "DECOLAR_POUSAR",  # Mão aberta
+    (0, 0, 0, 0, 0): "PARAR_MOTOR",     # Mão fechada
+    (1, 0, 0, 0, 0): "FRENTE",          # Joinha
+    (1, 0, 0, 0, 1): "FLIP",            # Hang Loose
+    (0, 1, 1, 0, 0): "TRAS"             # Sinal de Paz (V)
 }
 
-def rodar_controle_gestos():
+def rodar_controle_gestos(drone): # 👈 Recebe o drone como argumento
     cap = cv2.VideoCapture(0)
-    ret, frame = cap.read()
-    if not ret:
-        print("Câmera não encontrada")
+    success, frame_inicial = cap.read()
+    if not success:
+        print("Não foi possível acessar a câmera do computador.")
         return
 
-    h, w, _ = frame.shape
-    prev_time = 0
-    cv2.namedWindow("Gestos", cv2.WINDOW_NORMAL)
+    altura, largura, _ = frame_inicial.shape
+    p_time = 0
+    decolado = False # Variável de controle para alternar entre decolar e pousar
 
-    try:
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
+    cv2.namedWindow("Modo Drone - Gestos", cv2.WINDOW_NORMAL)
 
-            frame = cv2.flip(frame, 1)
-            frame, results = processar_frame_mao(frame)
-            pontos = coletar_coordenadas(results, w, h)
+    while True:
+        success, img = cap.read()
+        if not success:
+            break
+
+        img = cv2.flip(img, 1)
+        img, resultados = processar_frame_mao(img)
+        pontos_mao = coletar_coordenadas(resultados, largura, altura)
+        
+        comando_atual = "NENHUM GESTO DETECTADO"
+
+        if len(pontos_mao) > 0:
+            dedos = mapear_dedos_levantados(pontos_mao)
+            chave_busca = tuple(dedos)
             
-            gesto = "Nenhum"
-            if pontos:
-                dedos = mapear_dedos_levantados(pontos)
-                gesto = GESTOS.get(tuple(dedos), "Desconhecido")
+            if chave_busca in DICIONARIO_COMANDOS:
+                comando_atual = DICIONARIO_COMANDOS[chave_busca]
+                
+                # ==============================================================
+                # 🛸 ÁREA DE EXECUÇÃO DE COMANDOS REAIS NO DRONE
+                # ==============================================================
+                if drone: # Só executa se o drone estiver realmente conectado
+                    try:
+                        if comando_atual == "DECOLAR_POUSAR":
+                            if not decolado:
+                                drone.takeoff()
+                                decolado = True
+                            else:
+                                drone.land()
+                                decolado = False
+                                
+                        elif comando_atual == "PARAR_MOTOR":
+                            drone.emergency() # Corta os motores imediatamente
+                            decolado = False
+                            
+                        elif comando_atual == "FRENTE":
+                            drone.move_forward(30) # Move 30 centímetros para frente
+                            
+                        elif comando_atual == "TRAS":
+                            drone.move_back(30) # Move 30 centímetros para trás
+                            
+                        elif comando_atual == "FLIP":
+                            drone.flip_forward() # Realiza um mortal para frente
+                    except Exception as drone_error:
+                        print(f"Erro ao enviar comando para o drone: {drone_error}")
+                # ==============================================================
+            else:
+                comando_atual = "GESTO DESCONHECIDO"
 
-            curr_time = time.time()
-            fps = 1 / (curr_time - prev_time) if (curr_time - prev_time) > 0 else 0
-            prev_time = curr_time
+        # Exibição do FPS e HUD na tela
+        c_time = time.time()
+        fps = 1 / (c_time - p_time) if (c_time - p_time) > 0 else 0
+        p_time = c_time
 
-            cv2.rectangle(frame, (0, 0), (w, 80), (40, 40, 40), cv2.FILLED)
-            cv2.putText(frame, f"Gesto: {gesto}", (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            cv2.putText(frame, f"FPS: {int(fps)} | Q para sair", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+        # Puxa informações de bateria se o drone físico estiver ativo
+        bateria_status = f"BAT: {drone.get_battery()}%" if drone else "MODO: SIMULADOR"
 
-            cv2.imshow("Gestos", frame)
-            
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-    finally:
-        cap.release()
-        cv2.destroyAllWindows()
+        cv2.rectangle(img, (0, 0), (largura, 95), (40, 40, 40), cv2.FILLED)
+        cv2.putText(img, f"COMANDO: {comando_atual} | {bateria_status}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        cv2.putText(img, f"FPS: {int(fps)} | Pressione 'Q' para retornar ao Menu", (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (230, 230, 230), 1)
+
+        cv2.imshow("Modo Drone - Gestos", img)
+        
+        tecla = cv2.waitKey(1) & 0xFF
+        if tecla == ord('q') or tecla == 27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
