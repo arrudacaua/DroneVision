@@ -3,14 +3,14 @@ import time
 from reconhecimento_gestos.detector import processar_frame_mao, coletar_coordenadas, mapear_dedos_levantados
 
 DICIONARIO_COMANDOS = {
-    (1, 1, 1, 1, 1): "DECOLAR_POUSAR",  # Mão aberta
-    (0, 0, 0, 0, 0): "PARAR_MOTOR",     # Mão fechada
-    (1, 0, 0, 0, 0): "FRENTE",          # Joinha
-    (1, 0, 0, 0, 1): "FLIP",            # Hang Loose
-    (0, 1, 1, 0, 0): "TRAS"             # Sinal de Paz (V)
+    (1, 1, 1, 1, 1): "DECOLAR_POUSAR",
+    (0, 0, 0, 0, 0): "PARAR_MOTOR",
+    (1, 0, 0, 0, 0): "FRENTE",
+    (1, 0, 0, 0, 1): "FLIP",
+    (0, 1, 1, 0, 0): "TRAS"
 }
 
-def rodar_controle_gestos(drone): # 👈 Recebe o drone como argumento
+def rodar_controle_gestos(drone):
     cap = cv2.VideoCapture(0)
     success, frame_inicial = cap.read()
     if not success:
@@ -19,7 +19,7 @@ def rodar_controle_gestos(drone): # 👈 Recebe o drone como argumento
 
     altura, largura, _ = frame_inicial.shape
     p_time = 0
-    decolado = False # Variável de controle para alternar entre decolar e pousar
+    decolado = False
 
     cv2.namedWindow("Modo Drone - Gestos", cv2.WINDOW_NORMAL)
 
@@ -41,10 +41,7 @@ def rodar_controle_gestos(drone): # 👈 Recebe o drone como argumento
             if chave_busca in DICIONARIO_COMANDOS:
                 comando_atual = DICIONARIO_COMANDOS[chave_busca]
                 
-                # ==============================================================
-                # 🛸 ÁREA DE EXECUÇÃO DE COMANDOS REAIS NO DRONE
-                # ==============================================================
-                if drone: # Só executa se o drone estiver realmente conectado
+                if drone:
                     try:
                         if comando_atual == "DECOLAR_POUSAR":
                             if not decolado:
@@ -55,29 +52,26 @@ def rodar_controle_gestos(drone): # 👈 Recebe o drone como argumento
                                 decolado = False
                                 
                         elif comando_atual == "PARAR_MOTOR":
-                            drone.emergency() # Corta os motores imediatamente
+                            drone.emergency()
                             decolado = False
                             
                         elif comando_atual == "FRENTE":
-                            drone.move_forward(30) # Move 30 centímetros para frente
+                            drone.move_forward(30)
                             
                         elif comando_atual == "TRAS":
-                            drone.move_back(30) # Move 30 centímetros para trás
+                            drone.move_back(30)
                             
                         elif comando_atual == "FLIP":
-                            drone.flip_forward() # Realiza um mortal para frente
+                            drone.flip_forward()
                     except Exception as drone_error:
                         print(f"Erro ao enviar comando para o drone: {drone_error}")
-                # ==============================================================
             else:
                 comando_atual = "GESTO DESCONHECIDO"
 
-        # Exibição do FPS e HUD na tela
         c_time = time.time()
         fps = 1 / (c_time - p_time) if (c_time - p_time) > 0 else 0
         p_time = c_time
 
-        # Puxa informações de bateria se o drone físico estiver ativo
         bateria_status = f"BAT: {drone.get_battery()}%" if drone else "MODO: SIMULADOR"
 
         cv2.rectangle(img, (0, 0), (largura, 95), (40, 40, 40), cv2.FILLED)
