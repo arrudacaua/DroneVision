@@ -3,8 +3,8 @@ import time
 from reconhecimento_gestos.detector import processar_frame_mao, coletar_coordenadas, mapear_dedos_levantados
 
 DICIONARIO_COMANDOS = {
-    (1, 1, 1, 1, 1): "DECOLAR_POUSAR",
-    (0, 0, 0, 0, 0): "PARAR_MOTOR",
+    (1, 1, 1, 1, 1): "LAND",
+    (0, 0, 0, 0, 0): "",
     (1, 0, 0, 0, 0): "FRENTE",
     (1, 0, 0, 0, 1): "FLIP",
     (0, 1, 1, 0, 0): "TRAS"
@@ -19,7 +19,6 @@ def rodar_controle_gestos(drone):
 
     altura, largura, _ = frame_inicial.shape
     p_time = 0
-    decolado = False
 
     cv2.namedWindow("Modo Drone - Gestos", cv2.WINDOW_NORMAL)
 
@@ -43,17 +42,8 @@ def rodar_controle_gestos(drone):
                 
                 if drone:
                     try:
-                        if comando_atual == "DECOLAR_POUSAR":
-                            if not decolado:
-                                drone.takeoff()
-                                decolado = True
-                            else:
-                                drone.land()
-                                decolado = False
-                                
-                        elif comando_atual == "PARAR_MOTOR":
-                            drone.emergency()
-                            decolado = False
+                        if comando_atual == "LAND":
+                            drone.land()
                             
                         elif comando_atual == "FRENTE":
                             drone.move_forward(30)
