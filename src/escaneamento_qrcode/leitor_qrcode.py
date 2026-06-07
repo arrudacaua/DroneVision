@@ -32,3 +32,36 @@ def rodar_scanner_qr(drone=None):
         dados, pontos, _ = detector_qr.detectAndDecode(img)
 
         conteudo_qr = "NENHUM QR CODE NA TELA"
+        if dados:
+            conteudo_qr = dados.strip()
+
+            if pontos is not None:
+                pontos = pontos.astype(int)
+                for i in range(len(pontos[0])):
+                    ponto_atual = tuple(pontos[0][i])
+                    proximo_ponto = tuple(pontos[0][(i + 1) % len(pontos[0])])
+                    cv2.line(img, ponto_atual, proximo_ponto, (0, 255, 0), 3)
+
+            if conteudo_qr.startswith("http") and conteudo_qr != ultimo_qr_lido:
+                print(f"\n🌐 Link identificado! Abrindo no navegador: {conteudo_qr}")
+                
+                webbrowser.open(conteudo_qr)
+                
+                ultimo_qr_lido = conteudo_qr
+
+        c_time = time.time()
+        fps = 1 / (c_time - p_time) if (c_time - p_time) > 0 else 0
+        p_time = c_time
+
+        cv2.rectangle(img, (0, 0), (largura, 95), (40, 40, 40), cv2.FILLED)
+        cv2.putText(img, f"QR CODE: {conteudo_qr}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        cv2.putText(img, f"FPS: {int(fps)} | MODO: TESTE PC | Pressione 'Q' para Sair", (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (230, 230, 230), 1)
+
+        cv2.imshow("Modo Teste PC - Scanner QR", img)
+
+        tecla = cv2.waitKey(1) & 0xFF
+        if tecla == ord('q') or tecla == 27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
