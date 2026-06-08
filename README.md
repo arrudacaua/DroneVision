@@ -1,56 +1,178 @@
 # DroneVision
 
-DroneVision é um sistema modular de visão computacional desenvolvido como projeto de primeiro período de faculdade. O objetivo principal do ecossistema é atuar como uma interface inteligente de controle para drones (focando na biblioteca djitellopy), traduzindo dados visuais capturados por uma câmera em comandos de navegação em tempo real.
+DroneVision é um sistema modular de visão computacional desenvolvido como projeto acadêmico com foco em automação, monitoramento e controle de drones utilizando Python.
 
-O diferencial do projeto está na sua arquitetura estruturada. Em vez de concentrar toda a lógica em um único script, o sistema foi modularizado em pacotes independentes coordenados por um menu central. Essa abordagem garante manutenibilidade e otimização do processamento, carregando módulos pesados de inteligência artificial apenas quando requisitados pelo usuário.
+O projeto integra técnicas de Visão Computacional, Reconhecimento Facial, Leitura de QR Code e Planejamento de Rotas para o drone DJI Tello, utilizando a biblioteca DJITelloPy.
 
-## Estrutura do Projeto
+Diferentemente da primeira versão do projeto, os módulos foram desacoplados e podem ser executados individualmente, permitindo maior flexibilidade para testes, manutenção e desenvolvimento.
 
-O software é dividido em módulos especializados dentro do diretório principal:
+---
 
-* src/main.py: O orquestrador central do sistema. Gerencia a interface de texto com o usuário e gerencia a inicialização e o encerramento seguro dos módulos.
-* src/gestos/: Módulo focado no mapeamento anatômico da mão humana utilizando MediaPipe. É composto por um detector puro que processa coordenadas geométricas (X, Y) e um tradutor que converte combinações de dedos levantados em comandos operacionais como decolagem, pouso e direções.
-* src/reconhecimento/: Diretório reservado para os algoritmos de identificação e rastreamento facial.
-* src/qrcode/: Módulo encarregado da leitura e decodificação de tags em tempo real para automação de tarefas.
-* src/rotas/: Módulo de telemetria para planejamento de caminhos coordenados e monitoramento do status do drone.
+# Estrutura do Projeto
 
-## Funcionalidades do Módulo de Gestos
+O sistema está organizado em módulos independentes:
 
-O sistema traduz interações físicas em strings de comando através do monitoramento de marcos anatômicos. As leituras geométricas realizam as seguintes conversões diretas:
+* `reconhecimento_facial.py`
+  Responsável pelo reconhecimento facial em tempo real utilizando OpenCV e Face Recognition.
 
-* Mão totalmente aberta: Comando de decolagem ou pouso.
-* Mão totalmente fechada: Parada de emergência dos motores.
-* Gesto de polegar levantado (Joinha): Movimentação para frente.
-* Gesto com polegar e mínimo levantados (Hang Loose): Comando para execução de manobra acrobática (Flip).
-* Indicador e médio levantados: Movimentação para trás.
+* `leitor_qrcode.py`
+  Responsável pela leitura e interpretação de QR Codes através da câmera.
 
-## Requisitos de Sistema
+* `gerenciador_rotas.py`
+  Responsável pela criação e gerenciamento de rotas de navegação.
 
-A execução do ambiente exige uma versão estável do interpretador Python (ambiente homologado nas versões 3.11 ou 3.12). Os pacotes fundamentais utilizados são:
+* `executor_rotas.py`
+  Responsável pela execução das rotas previamente definidas no drone.
 
-* OpenCV (opencv-python)
-* MediaPipe
+* `rostos/`
+  Diretório que armazena as imagens utilizadas para cadastro facial.
+
+---
+
+# Funcionalidades
+
+## Reconhecimento Facial
+
+* Cadastro de múltiplos usuários.
+* Identificação facial em tempo real.
+* Exibição do nome do usuário detectado.
+* Suporte para imagens JPG, JPEG e PNG.
+
+## Leitura de QR Code
+
+* Detecção automática de QR Codes.
+* Leitura em tempo real pela câmera.
+* Possibilidade de utilização para automação de comandos.
+
+## Gerenciamento de Rotas
+
+* Criação de sequências de movimentação.
+* Organização de comandos de navegação.
+* Estrutura preparada para integração com drones.
+
+## Controle do Drone
+
+* Integração com a biblioteca DJITelloPy.
+* Comunicação com o drone DJI Tello.
+* Execução de comandos de movimentação.
+* Monitoramento básico de bateria.
+
+---
+
+# Requisitos
+
+O projeto foi desenvolvido utilizando:
+
+* Python 3.11+
+* OpenCV
+* Face Recognition
+* NumPy
 * DJITelloPy
+* Pillow
 
-## Instruções de Instalação e Execução
+---
 
-Para configurar o ambiente virtual local e instalar as dependências necessárias sem interferir nas configurações globais do sistema, siga as instruções abaixo pelo terminal do seu ambiente de desenvolvimento.
+# Instalação
 
-1. Clone o repositório para sua máquina local:
-   git clone https://github.com/seu-usuario/DroneVision.git
-   cd DroneVision
+Clone o repositório:
 
-2. Crie e ative o ambiente virtual isolado (Virtual Environment):
-   python -m venv .venv
-   
-   No Windows (PowerShell):
-   .venv/Scripts/Activate.ps1
-   
-   No Linux ou macOS:
-   source .venv/bin/activate
+```bash
+git clone https://github.com/seu-usuario/DroneVision.git
+cd DroneVision
+```
 
-3. Instale as dependências listadas no arquivo de requisitos:
-   pip install -r requirements.txt
+Crie um ambiente virtual:
 
-4. Inicie a aplicação através do orquestrador principal:
-   python src/main.py
+```bash
+python -m venv .venv
+```
+
+Ative o ambiente virtual:
+
+Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+Linux/macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+Instale as dependências:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# Execução dos Módulos
+
+Os módulos são executados individualmente.
+
+### Reconhecimento Facial
+
+```bash
+python reconhecimento_facial.py
+```
+
+### Leitor de QR Code
+
+```bash
+python leitor_qrcode.py
+```
+
+### Gerenciador de Rotas
+
+```bash
+python gerenciador_rotas.py
+```
+
+### Executor de Rotas
+
+```bash
+python executor_rotas.py
+```
+
+---
+
+# Cadastro de Rostos
+
+As imagens devem ser organizadas da seguinte forma:
+
+```text
+rostos/
+├── Camillo_Carvalho/
+│   ├── foto1.jpg
+│   ├── foto2.jpg
+│
+├── Joao_Paulo/
+│   ├── foto1.jpg
+│
+├── Rubens_Sousa/
+│   ├── foto1.jpg
+```
+
+Cada pasta representa uma pessoa e pode conter várias imagens para melhorar a precisão do reconhecimento.
+
+---
+
+# Tecnologias Utilizadas
+
+* Python
+* OpenCV
+* Face Recognition
+* NumPy
+* DJITelloPy
+* QRCode
+* Git
+* GitHub
+
+---
+
+# Autor
+
+Projeto desenvolvido para a disciplina DroneVision como atividade acadêmica de graduação.

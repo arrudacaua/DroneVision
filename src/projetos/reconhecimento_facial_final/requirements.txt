@@ -1,0 +1,7 @@
+opencv-python
+numpy
+pillow
+click
+colorama
+face-recognition-models==0.3.0
+face-recognition==1.3.0
